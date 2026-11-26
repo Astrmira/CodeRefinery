@@ -8,5 +8,38 @@ jobs:
   skills:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - run: python3 scripts/check_skills.py
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: pip install pyyaml==6.0.3
+
+      - name: Check skills
+        run: python scripts/check_skills.py
+
+      - name: Confirm the checks can fail
+        run: python scripts/check_skills.py --self-test
+
+      # The installer skips a skill it cannot parse and still exits 0,
+      # so check what it actually installed. CI installs are not real users,
+      # so they are kept out of the CLI's telemetry.
+      - name: Install with the skills CLI
+        env:
+          DO_NOT_TRACK: "1"
+        run: |
+          dest=$(mktemp -d)
+          cd "$dest"
+          npx -y skills@1.9.0 add "$GITHUB_WORKSPACE" --skill '*' --agent claude-code --copy -y
+          status=0
+          for name in $(python "$GITHUB_WORKSPACE/scripts/check_skills.py" --expected); do
+            if [ -f ".claude/skills/$name/SKILL.md" ]; then
+              echo "installed: $name"
+            else
+              echo "::error::skills CLI did not install $name"
+              status=1
+            fi
+          done
+          exit $status

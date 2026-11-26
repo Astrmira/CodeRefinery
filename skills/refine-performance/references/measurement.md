@@ -34,7 +34,9 @@ Prefer what the project already uses.
 
 ## Noise
 
-Repeat the baseline several times before changing anything. The spread you see is the noise band for this machine and workload. Report the median with its spread (interquartile range, or min and max), and percentiles (p50, p95, p99) for latency; averages hide tails.
+Repeat the baseline several times before changing anything. The spread you see is the noise band for this machine and workload. Report the median with its spread (interquartile range, or min and max). For latency, report the percentiles your sample size supports: averages hide tails, but a p99 means little without hundreds of samples. With a few dozen runs, report the median and spread and say that the tail was not measured.
+
+The spread of repeated runs is not all the noise. A comparison adds its own error: separate processes, separate builds, run order, memory layout, and thermal state can all differ between two runs of identical code. Before trusting a comparison procedure, run it once as A/A, with the baseline in both slots. The difference it reports is the smallest effect this setup can detect. If a candidate's gain is no larger than that, it is not a result yet.
 
 A difference inside the noise band is no difference. Do not keep adding iterations until the result you want appears.
 
@@ -42,6 +44,8 @@ A difference inside the noise band is no difference. Do not keep adding iteratio
 
 - Alternate short adjacent runs: baseline, candidate, baseline, candidate. If all baseline samples run first and all candidate samples later, drift in machine state can masquerade as a result.
 - Keep everything identical except the code: command, inputs, warmup, iteration count.
+- Report each workload and input shape separately. A pooled median, or one overall number, can hide a regression on small inputs behind a gain on large ones.
+- Keep the workloads you settled while framing as the basis for claims. An input added after a candidate exists is a diagnostic: useful for seeing where the change helps or hurts, and labeled as such when reported.
 - Use the statistical comparison your tool provides where it exists (benchstat, BenchmarkDotNet, pyperf `compare_to`, hyperfine's summary).
 - Record every pair. Exclude one only with objective evidence of contamination (a competing process, a load spike, an interruption), and record the exclusion. Excluding runs because of which way they point is how noise turns into a fake win.
 - If results conflict or drift, fix the measurement before changing more code; otherwise every later decision rests on noise.

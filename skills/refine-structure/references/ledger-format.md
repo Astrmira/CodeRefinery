@@ -36,7 +36,7 @@ What exists and who owns what. Tables work well, for example:
 - Conclusion: <what you propose and why>
 - Cost and risk: <...>
 - Status: <proposed, approved, done, rejected, deferred>
-- Change and verification: <commit or PR, tests added, what was run>
+- Change and verification: <commit or PR, tests added, what was run, and whether the tests were seen to catch a deliberate mistake>
 - Behavior change: <none, or what changed and when the user approved it>
 
 ## Lock-ins

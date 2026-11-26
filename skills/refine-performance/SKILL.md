@@ -3,7 +3,7 @@ name: refine-performance
 description: Run a measured performance refinement campaign on an application or module. Establishes representative workloads and a baseline, explains where the cost goes with profiles and a per-operation work ledger, then removes redundant work such as repeated validation, defensive copies, representation churn, chatty I/O, and invariant work redone on every call, keeping only changes that measure better without changing behavior. Use when the user asks for a deliberate performance pass over a codebase or feature, such as making it faster or cheaper, or cutting overhead, latency, memory, or query counts. Not for one-off micro-optimizations while coding or a single obvious fix.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Refine Performance
@@ -23,7 +23,7 @@ So think in terms of **work per operation**: for a representative request, job, 
 When the campaign is done:
 
 - The workloads, metrics, and a reproducible baseline were agreed with the user.
-- Every change that stayed removes or relocates work rather than disguising it, preserves behavior, and beats the measured noise on its target metric without making the guard metrics worse.
+- Every change that stayed removes or relocates work rather than disguising it, preserves behavior, and leaves the guard metrics no worse. Each is reported as what it showed: faster where a time metric beat the noise, less work where only the counts moved.
 - Attempts that did not pay off were reverted and recorded, so nobody retries them blindly.
 - Necessary protection (security checks, resource limits, data integrity, concurrency safety) is still in place, possibly cheaper.
 - The wins are protected by cheap, stable regression guards.
@@ -49,9 +49,11 @@ A campaign moves through framing, explaining, changing, and verifying. In practi
 
 ### Frame what you are measuring
 
-The goal is a target you can measure and trust. Pick a few workloads that reflect what users actually do, not the ones that happen to be easy to benchmark, and decide for each whether cold start, first use, or steady state is the subject. Give each a primary metric and a few guard metrics (memory, tail latency, error rate, output equality), so a win on one axis cannot hide a loss on another. Build the smallest reproducible driver if none exists, preferring the project's own benchmark tooling.
+The goal is a target you can measure and trust. Pick a few workloads that reflect what users actually do, not the ones that happen to be easy to benchmark, and decide for each whether cold start, first use, or steady state is the subject. Give each a primary metric and a few guard metrics (memory, tail latency, error rate, output equality), so a win on one axis cannot hide a loss on another. Guard the input shapes a change could hurt as well as the ones it helps: a change that speeds up large inputs often slows small or unusual ones. Build the smallest reproducible driver if none exists, preferring the project's own benchmark tooling.
 
-Repeat the baseline until you know its spread; without a noise band you cannot tell a win from luck. Where it is cheap, also count the work per operation (queries, calls, allocations, validations). Counts are deterministic, so they show exactly whether a change removed what it targeted. [Measurement](references/measurement.md) covers harnesses, tools, conditions, and noise.
+Settle the workloads now, before you have a candidate. If one later turns out to be unrepresentative, replace it openly and re-measure the baseline. Inputs chosen after a candidate exists tend to be chosen because the candidate shines on them; they are good for understanding where a change helps or hurts, but not as the headline result.
+
+Repeat the baseline until you know its spread; without a noise band you cannot tell a win from luck. The most honest estimate comes from running your whole comparison once with the baseline in both slots. Whatever difference that A/A run reports is the smallest effect your setup can detect, and it is often larger than the spread of repeated runs suggests. Where it is cheap, also count the work per operation (queries, calls, allocations, validations). Counts are deterministic, so they show exactly whether a change removed what it targeted. [Measurement](references/measurement.md) covers harnesses, tools, conditions, and noise.
 
 ### Explain where the cost goes
 
@@ -73,15 +75,15 @@ A cache is a new owner of state, with its own invalidation and staleness bugs, s
 
 ### Verify honestly
 
-Correctness comes first: build, run the targeted tests, and compare the workload's outputs before and after. Then measure under the same conditions as the baseline, alternating baseline and candidate runs so that drift in the machine cannot pose as a result. How much rigor you need depends on how close the effect is to the noise.
+Correctness comes first: build, run the targeted tests, and compare outputs and errors before and after, on the workloads and on edge inputs. Then measure under the same conditions as the baseline, alternating baseline and candidate runs so that drift in the machine cannot pose as a result. How much rigor you need depends on how close the effect is to the noise.
 
-Keep a change when the primary metric improves beyond the noise and the guard metrics hold; one that measurably removes work with neutral timing can stay if it also simplifies the code. Revert what sits within the noise and adds complexity, and anything that makes something worse. Record every attempt, reverted ones included: failures are knowledge about the system, and the record stops them being retried. Run the affected benchmarks each round, and the full benchmark set and test suite at milestones and before you close.
+Keep a change when the primary metric improves beyond the noise and the guard metrics hold. When the agreed target is itself a count, such as queries per request, compare the counts directly, since they have no noise. A change that removes measurable work while timing stays within the noise can stay if the code ends up no more complex; report it as less work, not as faster. Revert what sits within the noise and adds complexity, and anything that makes something worse. Record every attempt, reverted ones included: failures are knowledge about the system, and the record stops them being retried. Run the affected benchmarks each round, and the full benchmark set and test suite at milestones and before you close.
 
 ### Make the wins stick and close
 
 Protect the wins with guards that are cheap and stable: deterministic assertions in tests (queries per request, allocations per call), or a benchmark budget in CI where the project already runs benchmarks reliably. Timing gates on noisy shared runners produce false alarms until people ignore them.
 
-The campaign is over when the target is met, when the remaining cost is necessary or out of scope, or when the next ideas promise less than the noise or too little for their complexity. Report baseline and final numbers with their conditions, where the remaining cost lies and why, the attempts kept and reverted, behavior changes and their approval, the guards added, and the limits of the evidence.
+The campaign is over when the target is met, when the remaining cost is necessary or out of scope, or when the next ideas promise less than the noise or too little for their complexity. Report baseline and final numbers with their conditions, where the remaining cost lies and why, the attempts kept (as faster or as less work) and reverted, behavior changes and their approval, the guards added, and the limits of the evidence.
 
 ## Thinking deeper
 
@@ -100,7 +102,7 @@ These are the questions that turn tuning into refinement. Return to them wheneve
 Most of this campaign is judgment. A few things decide whether its results can be trusted at all, so treat these as firm:
 
 - **Behavior and contracts.** Performance work must not change what the code does. Users and other systems depend on outputs, formats, and public APIs in ways a benchmark never checks. Any change there needs explicit approval.
-- **Benchmark integrity.** Numbers obtained by optimizing the benchmark instead of the product are false: special cases for benchmark inputs, a workload redefined to look better, caches keyed to the benchmark's shape. Claim an improvement only from before-and-after measurements under equivalent conditions, with the noise reported. Never run two benchmarks at once on one machine; they contaminate each other.
+- **Benchmark integrity.** Numbers obtained by optimizing the benchmark instead of the product are false: special cases for benchmark inputs, a workload redefined to look better, a stress input picked for the candidate and reported as the typical case, caches keyed to the benchmark's shape. Claim an improvement only from before-and-after measurements under equivalent conditions, with the noise reported. Never run two benchmarks at once on one machine; they contaminate each other.
 - **Protection.** Guards against attacks, resource exhaustion (size limits, timeouts, recursion depth), corruption, and races exist for inputs a benchmark never sends. Make them cheaper; do not remove them. For the same reason, do not disable safety checks globally or add unsafe compiler or runtime flags to win numbers.
 - **Other people's work**: leave unrelated changes in the tree alone, and use no destructive version-control operations.
 

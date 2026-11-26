@@ -19,6 +19,7 @@ Machine, OS, runtime versions, build configuration, and the data set
 ## Workloads
 ### W-01 <name>
 - Operation: <what is executed, with which inputs; cold start, first use, or steady state>
+- Role: <primary, guard, or a diagnostic added later>
 - Command: <exact command>
 - Metrics: <primary metric; guard metrics>
 - Counters: <what is counted per operation, and how>
@@ -27,7 +28,8 @@ Machine, OS, runtime versions, build configuration, and the data set
 | Workload | Metric | Median | Spread | Runs | Commit |
 |---|---|---|---|---|---|
 
-Noise band: <how much the baseline varies between repeated runs>
+Noise band: <how much the baseline varies between repeated runs, and what an A/A
+comparison reported>
 
 ## Where the cost goes
 Per workload: a profile summary with the code that owns the top costs, and a work
@@ -46,7 +48,7 @@ ledger where cost is diffuse, for example:
 - Change: <files, commit>
 - Correctness: <tests and output comparison, with results>
 - Measurement: <command; baseline and candidate runs; median and spread; counter changes>
-- Outcome: <kept or reverted, and why>
+- Outcome: <kept as faster, kept as less work, or reverted, and why>
 
 ## Behavior changes
 <what changed, and when the user approved it>

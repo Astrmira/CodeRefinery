@@ -8,8 +8,8 @@ CodeRefinery 的 skill 是**主动发起的专项战役**，不是跟着每次�
 
 | Skill | 版本 | 作用 |
 |---|---|---|
-| [`refine-structure`](skills/refine-structure/SKILL.md) | 0.2.0 | 测绘仓库或模块的已有能力、重复知识、职责归属和已校验事实；合并重复知识和重复造的轮子；修正缺失或错误的抽象；删除被取代的旧路径；用类型、lint 或架构规则固化决定。 |
-| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.2.0 | 建立代表性负载和基线；用 profile 和"按操作计数的工作账本"解释开销在哪；去掉重复校验、防御性拷贝、表示之间来回转换、零碎的 I/O、每次调用都重做的不变计算等多余工作；只保留实测更好的改动。 |
+| [`refine-structure`](skills/refine-structure/SKILL.md) | 0.2.1 | 测绘仓库或模块的已有能力、重复知识、职责归属和已校验事实；合并重复知识和重复造的轮子；修正缺失或错误的抽象；删除被取代的旧路径；用类型、lint 或架构规则固化决定。 |
+| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.2.1 | 建立代表性负载和基线；用 profile 和"按操作计数的工作账本"解释开销在哪；去掉重复校验、防御性拷贝、表示之间来回转换、零碎的 I/O、每次调用都重做的不变计算等多余工作；只保留实测更好的改动。 |
 
 每个 skill 的 description 都刻意写得很窄：你明确要做一次专项精炼时（用斜杠命令或直接用自然语言说），agent 才会加载它；日常编码不会触发。
 
@@ -41,7 +41,7 @@ npx skills add Astrmira/CodeRefinery
 | Cursor | `/refine-structure <范围和目标>` |
 | 其他 | 让 agent 使用 `refine-structure` skill |
 
-`refine-performance` 用法相同。也可以直接描述任务，比如"这个仓库到处是重复的工具函数，做一次结构整理"，支持自动选择 skill 的 agent 会加载对应的 skill。
+`refine-performance` 用法相同。也可以直接描述任务，比如"这个仓库到处是重复的工具函数，做一次结构整理"，支持自动选择 skill 的 agent 可以据此加载对应的 skill。
 
 示例：
 
@@ -70,12 +70,12 @@ npx skills add Astrmira/CodeRefinery
 ## 兼容性说明
 
 - 完全遵循 [Agent Skills 规范](https://agentskills.io/specification)，没有扩展字段，任何兼容的 agent 都能加载。
-- 是否触发只由 description 决定。如果想让某个 skill 只能手动调用：Claude Code 和 Cursor 在 frontmatter 加 `disable-model-invocation: true`；Codex 加一个 `agents/openai.yaml`，写 `policy: { allow_implicit_invocation: false }`。
+- description 让 agent 能认出"这是一次专项精炼"的请求。skill 是否启用、是否加载、同名 skill 装了两份时用哪一份，由宿主和它的配置决定。如果想让某个 skill 只能手动调用：Claude Code 和 Cursor 在 frontmatter 加 `disable-model-invocation: true`；Codex 加一个 `agents/openai.yaml`，写 `policy: { allow_implicit_invocation: false }`。
 - 每个 skill 目录自包含，因为安装器按目录单独复制。`references/fact-ownership.md` 由两个 skill 共用，有意复制了两份。
 
 ## 开发
 
-`python scripts/check_skills.py` 会按规范检查 frontmatter、解析所有相对链接，并在共享参考文件的副本不一致时报错。CI 在每次 push 时运行它。
+`python scripts/check_skills.py`（需要 PyYAML）会把每个 skill 的 frontmatter 按 YAML 解析并对照规范检查；缺少预期的 skill 时报错；解析 skill 和两个 README 里的所有相对链接；共享参考文件的副本不一致时报错。`--self-test` 会在故意改坏的仓库副本上跑这些检查，确认它们真的会失败。CI 在每次 push 时运行这两项，再用 skills CLI 实际安装一次，确认每个预期的 skill 都装上了，因为 CLI 遇到解析不了的 skill 会直接跳过，但不会报错。
 
 ## 许可证
 

@@ -8,8 +8,8 @@ CodeRefinery skills are **campaigns you start on purpose**, not rules that ride 
 
 | Skill | Version | What it does |
 |---|---|---|
-| [`refine-structure`](skills/refine-structure/SKILL.md) | 0.2.0 | Maps capabilities, duplication, ownership, and validated facts across a repository or module; consolidates duplicated knowledge and reinvented wheels; repairs missing or wrong abstractions; removes superseded paths; locks decisions in with types, lint, or architecture rules. |
-| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.2.0 | Sets up representative workloads and a baseline; explains where the cost goes with profiles and a per-operation work ledger; removes redundant work such as repeated validation, defensive copies, representation churn, chatty I/O, and invariant work redone per call; keeps only changes that measure better. |
+| [`refine-structure`](skills/refine-structure/SKILL.md) | 0.2.1 | Maps capabilities, duplication, ownership, and validated facts across a repository or module; consolidates duplicated knowledge and reinvented wheels; repairs missing or wrong abstractions; removes superseded paths; locks decisions in with types, lint, or architecture rules. |
+| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.2.1 | Sets up representative workloads and a baseline; explains where the cost goes with profiles and a per-operation work ledger; removes redundant work such as repeated validation, defensive copies, representation churn, chatty I/O, and invariant work redone per call; keeps only changes that measure better. |
 
 Each skill's description is deliberately narrow: an agent loads it when you ask for a deliberate refinement pass, in a slash command or in plain words, and not during ordinary coding.
 
@@ -41,7 +41,7 @@ npx skills add Astrmira/CodeRefinery
 | Cursor | `/refine-structure <scope and goal>` |
 | Others | Ask the agent to use the `refine-structure` skill |
 
-The same forms work for `refine-performance`. You can also just describe the task, for example "the repo is full of duplicated helpers, do a structural cleanup pass", and agents that support automatic skill selection will load the matching skill.
+The same forms work for `refine-performance`. You can also just describe the task, for example "the repo is full of duplicated helpers, do a structural cleanup pass", and agents that support automatic skill selection can load the matching skill.
 
 Examples:
 
@@ -70,12 +70,12 @@ Run a campaign in its own session. Once a skill is loaded, most agents keep its 
 ## Compatibility notes
 
 - Skills follow the [Agent Skills specification](https://agentskills.io/specification) with no extension fields, so any compliant agent can load them.
-- Triggering is controlled by the description alone. If you want a skill to be strictly manual, add `disable-model-invocation: true` to its frontmatter (Claude Code, Cursor) or an `agents/openai.yaml` with `policy: { allow_implicit_invocation: false }` (Codex).
+- The description is what lets an agent recognize a request as a refinement campaign. Whether a skill is enabled, whether it is loaded, and which copy wins when the same name is installed twice are decided by the host and its configuration. To make a skill strictly manual, add `disable-model-invocation: true` to its frontmatter (Claude Code, Cursor) or an `agents/openai.yaml` with `policy: { allow_implicit_invocation: false }` (Codex).
 - Each skill directory is self-contained, because installers copy skill directories individually. `references/fact-ownership.md` is shared by both skills and duplicated on purpose.
 
 ## Development
 
-`python scripts/check_skills.py` checks frontmatter against the specification, resolves every relative link, and fails if the copies of a shared reference file differ. CI runs it on every push.
+`python scripts/check_skills.py` (requires PyYAML) parses each skill's frontmatter as YAML and checks it against the specification, fails if an expected skill is missing, resolves every relative link in the skills and the READMEs, and fails if the copies of a shared reference file differ. `--self-test` runs the checks against deliberately broken copies of the repository to confirm they fail. CI runs both on every push, then installs the skills with the skills CLI and confirms that every expected skill was installed, because the CLI skips a skill it cannot parse without failing.
 
 ## License
 

@@ -3,7 +3,7 @@ name: refine-structure
 description: Run a deep structural refinement campaign on a repository or module. Maps what already exists, then consolidates duplicated knowledge and reinvented wheels, repairs missing or wrong abstractions, settles who owns each decision and validated fact, and removes superseded paths, with behavior preserved. Use when the user asks for a deliberate structural pass over a codebase or module, such as deduplication, consolidating hand-rolled helpers, fixing abstractions, or an architecture or tech-debt cleanup. Not for routine coding, single bug fixes, or reviewing a small diff.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Refine Structure
@@ -77,7 +77,11 @@ Before large edits, show the user what you found and what you propose, and let t
 
 Make each change about one concept: establish the authoritative implementation, migrate the callers in scope, and delete the superseded code in the same unit. A half-migrated state is worse than either end, and a focused unit is easy to review and to revert. Leave a compatibility shim only when an external consumer needs one, and note when it can go.
 
-Where coverage is weak, pin the current behavior before moving it: outputs, the errors callers depend on, side effects, ordering, edge inputs. Passing tests prove nothing about behavior they never exercised. When many call sites need the same edit, a mechanical transformation (an IDE refactoring, a codemod, a structural rewrite with a tool such as ast-grep or comby) is more consistent and easier to review than a hundred hand edits.
+Where coverage is weak, pin the current behavior before moving it: outputs, the errors callers depend on, side effects, ordering, edge inputs. Passing tests prove nothing about behavior they never exercised.
+
+Two cheap checks make that evidence much stronger. First, see whether the tests can fail: make the mistake you are most likely to make, such as merging an edge case the wrong way or dropping an error path, and watch whether anything goes red. If nothing does, the suite is not yet evidence for this change. Second, where the old and new code can run side by side, compare them on many inputs, including the error cases and the types of error raised. A differential check asks the questions nobody thought to write as tests.
+
+When many call sites need the same edit, a mechanical transformation (an IDE refactoring, a codemod, a structural rewrite with a tool such as ast-grep or comby) is more consistent and easier to review than a hundred hand edits.
 
 Verify in proportion: a build or type check and the targeted tests for each unit, the full suite at milestones. When a test fails, judge it against the contract, not against your new code.
 
