@@ -1,0 +1,12 @@
+{
+  "name": "coderefinery",
+  "displayName": "CodeRefinery",
+  "version": "0.1.0",
+  "description": "User-invoked deep refinement campaigns for codebases: consolidate duplicated knowledge, fix abstractions, settle ownership. Performance refinement is planned.",
+  "author": {
+    "name": "Astrmira"
+  },
+  "repository": "https://github.com/Astrmira/CodeRefinery",
+  "license": "MIT",
+  "keywords": ["refactoring", "deduplication", "architecture", "code-quality", "skills"]
+}

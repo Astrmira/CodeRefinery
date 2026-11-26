@@ -1,0 +1,14 @@
+{
+  "name": "coderefinery",
+  "description": "Deep code refinement skills for AI coding agents",
+  "owner": {
+    "name": "Astrmira"
+  },
+  "plugins": [
+    {
+      "name": "coderefinery",
+      "source": "./",
+      "description": "User-invoked deep refinement campaigns for codebases"
+    }
+  ]
+}
