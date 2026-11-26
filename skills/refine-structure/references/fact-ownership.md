@@ -24,7 +24,7 @@ Types are evidence, not proof. Many languages erase or do not enforce them (Type
 
 ## Boundaries
 
-Facts are established where data enters: a public library API; HTTP, RPC, CLI, and message handlers; parsing of files, configuration, environment, database rows, and network responses; IPC and FFI; plugin and callback boundaries; deserialization; user-supplied code. Treat this as a starting list. Identify the project's actual boundaries while mapping, and record them in the fact map.
+Facts are established where data enters: a public library API; HTTP, RPC, CLI, and message handlers; parsing of files, configuration, environment, database rows, and network responses; IPC and FFI; plugin and callback boundaries; deserialization; user-supplied code. Treat this as a starting list. Identify the project's actual boundaries during the campaign, and record them in the ledger.
 
 A common finding is interior code full of checks because the boundary validates too little. The fix is to strengthen the boundary, then remove the interior checks it makes redundant.
 

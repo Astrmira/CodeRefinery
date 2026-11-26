@@ -8,7 +8,7 @@
     {
       "name": "coderefinery",
       "source": "./",
-      "description": "User-invoked deep refinement campaigns for codebases"
+      "description": "Deep refinement campaigns for codebases: structure and performance"
     }
   ]
 }

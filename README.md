@@ -1,17 +1,19 @@
 # CodeRefinery
 
-Deep code refinement skills for AI coding agents.
+Deep code refinement skills for AI coding agents. [中文](README.zh-CN.md)
 
 CodeRefinery skills are **campaigns you start on purpose**, not rules that ride along with every coding task. Most structural rot and overhead come from decisions made with local information: the author did not know a helper already existed, or could not see that a value had already been validated upstream. Resident rules ("reuse code", "don't over-validate") cannot supply that missing knowledge; they mostly make agents rigid and slower. A dedicated pass can afford to build the global view, decide from evidence, and restructure, and then it ends.
 
 ## Skills
 
-| Skill | Status | What it does |
+| Skill | Version | What it does |
 |---|---|---|
 | [`refine-structure`](skills/refine-structure/SKILL.md) | 0.1.0 | Maps capabilities, duplication, ownership, and validated facts across a repository or module; consolidates duplicated knowledge and reinvented wheels; repairs missing or wrong abstractions; removes superseded paths; locks decisions in with types, lint, or architecture rules. |
-| `refine-performance` | planned | Measured reduction of runtime overhead: diffuse defensive costs along request paths, redundant work, and architecture-level inefficiency. |
+| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.1.0 | Sets up representative workloads and a baseline; explains where the cost goes with profiles and a per-operation work ledger; removes redundant work such as repeated validation, defensive copies, representation churn, chatty I/O, and invariant work redone per call; keeps only changes that measure better. |
 
 Each skill's description is deliberately narrow: an agent loads it when you ask for a deliberate refinement pass, in a slash command or in plain words, and not during ordinary coding.
+
+The two skills share one idea. Duplication, redundant defense, and much runtime overhead all come from unclear ownership: of knowledge, of validated facts, of work. `refine-structure` fixes the ownership; `refine-performance` measures what that, and other redundant work, costs at runtime. Running structure first often removes overhead before it has to be measured.
 
 ## Install
 
@@ -28,7 +30,7 @@ npx skills add Astrmira/CodeRefinery
 /plugin install coderefinery@coderefinery
 ```
 
-**Manually:** copy `skills/refine-structure/` into your agent's skills directory, for example `.claude/skills/` (Claude Code) or `.agents/skills/` (Codex and other agents that read the shared location). Copy the whole directory; the skill reads its `references/` on demand.
+**Manually:** copy a directory from `skills/` into your agent's skills directory, for example `.claude/skills/` (Claude Code) or `.agents/skills/` (Codex and other agents that read the shared location). Copy the whole directory; each skill reads its `references/` on demand.
 
 ## Use
 
@@ -39,13 +41,15 @@ npx skills add Astrmira/CodeRefinery
 | Cursor | `/refine-structure <scope and goal>` |
 | Others | Ask the agent to use the `refine-structure` skill |
 
-You can also just describe the task, for example "the repo is full of duplicated helpers, do a structural cleanup pass", and agents that support automatic skill selection will load it.
+The same forms work for `refine-performance`. You can also just describe the task, for example "the repo is full of duplicated helpers, do a structural cleanup pass", and agents that support automatic skill selection will load the matching skill.
 
 Examples:
 
 ```
 /refine-structure whole repo; consolidate duplicated validation and the hand-rolled HTTP helpers
 /refine-structure src/billing; the pricing rules are scattered across handlers
+/refine-performance POST /orders is slow under load; profile is flat
+/refine-performance cut startup time of the CLI
 ```
 
 Run a campaign in its own session. Once a skill is loaded, most agents keep its text in the session context, so start a fresh session for ordinary work afterwards. Campaign state lives in `.refinery/<campaign>/ledger.md`, so a campaign can span several sessions.
@@ -54,16 +58,22 @@ Run a campaign in its own session. Once a skill is loaded, most agents keep its 
 
 - **Guidance, not procedure.** Each skill states what a good result looks like, how to judge, what counts as evidence, and when to stop. There are no quotas, scores, fixed agent counts, or line-count thresholds; those tend to replace the goal with a proxy.
 - **Knowledge and ownership as the unit.** Duplication is one piece of knowledge with several owners; redundant defense is a fact nobody clearly establishes; a wrong abstraction is one owner holding knowledge that changes for different reasons.
-- **Global view first.** The first output of a campaign is a map: existing capabilities (including dependencies and the standard library), duplication clusters, decision owners, and where facts are established.
+- **Global view first.** A structure campaign starts with a map of existing capabilities (including dependencies and the standard library), duplication, decision owners, and where facts are established. A performance campaign starts with workloads, a baseline, and an explanation of where the cost goes.
+- **Diffuse cost is counted, not guessed.** Overhead spread thin across layers leaves a flat profile. A work ledger counts the work per operation (validations, copies, conversions, queries), and counts are exact evidence that a change removed what it targeted.
+- **Measurement decides what stays.** Performance changes are kept only when they beat the measured noise without regressing guard metrics; the rest are reverted and recorded.
 - **"No change needed" is a valid result.**
-- **Lock-in through tooling, not prose.** Types, lint rules, and architecture tests enforce decisions at zero agent-runtime cost.
+- **Lock-in through tooling, not prose.** Types, lint rules, architecture tests, and deterministic work-count assertions enforce decisions at zero agent-runtime cost.
 - **Progressive disclosure.** `SKILL.md` stays short; detailed judgment material lives in `references/` and is read only when needed.
 
 ## Compatibility notes
 
 - Skills follow the [Agent Skills specification](https://agentskills.io/specification) with no extension fields, so any compliant agent can load them.
 - Triggering is controlled by the description alone. If you want a skill to be strictly manual, add `disable-model-invocation: true` to its frontmatter (Claude Code, Cursor) or an `agents/openai.yaml` with `policy: { allow_implicit_invocation: false }` (Codex).
-- Each skill directory is self-contained, because installers copy skill directories individually. Reference files shared between skills are duplicated on purpose and must be kept identical.
+- Each skill directory is self-contained, because installers copy skill directories individually. `references/fact-ownership.md` is shared by both skills and duplicated on purpose.
+
+## Development
+
+`python scripts/check_skills.py` checks frontmatter against the specification, resolves every relative link, and fails if the copies of a shared reference file differ. CI runs it on every push.
 
 ## License
 
