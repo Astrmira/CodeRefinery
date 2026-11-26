@@ -6,6 +6,8 @@ A profiler shows where time is spent. A work ledger shows what work is done and 
 
 One representative operation per ledger: a request, a job, a command, a render, a startup. Use a typical input and note its size. If the cost depends on input size (N items), build the ledger for a realistic N and mark which entries scale with it.
 
+A ledger needs the work that matters, not every line of code. Start coarse, one row per layer or major step, and go finer where a count surprises you or a step costs more than it should.
+
 ## Build it from two sides
 
 - **Static trace**: read the path from entry to exit (handler, middleware, service, domain, repository, serializer, and back) and note what each hop does to the data.
@@ -20,7 +22,9 @@ Counts from the running system beat counts from reading code. Middleware, interc
 
 ## What to record
 
-| Step | Work | Kind | Count per op | Scales with N | Necessary? | Owner |
+For each piece of work: where it happens, what kind of work it is, how many times it runs per operation, whether that grows with N, whether the outcome needs it, and who owns it. For example:
+
+| Step | Work | Kind | Count per op | Scales with N | Needed? | Owner |
 |---|---|---|---|---|---|---|
 | `OrderController.create` | validate order body | validation | 1 | no | yes: external boundary | handler |
 | `OrderService.place` | validate order again | validation | 1 | no | no: same fact, already established | none |

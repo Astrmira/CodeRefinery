@@ -1,7 +1,7 @@
 {
   "name": "coderefinery",
   "displayName": "CodeRefinery",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Deep refinement campaigns for codebases: consolidate duplicated knowledge and fix abstractions (refine-structure), and remove redundant runtime work with measured results (refine-performance).",
   "author": {
     "name": "Astrmira"

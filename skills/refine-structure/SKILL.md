@@ -3,128 +3,122 @@ name: refine-structure
 description: Run a deep structural refinement campaign on a repository or module. Maps what already exists, then consolidates duplicated knowledge and reinvented wheels, repairs missing or wrong abstractions, settles who owns each decision and validated fact, and removes superseded paths, with behavior preserved. Use when the user asks for a deliberate structural pass over a codebase or module, such as deduplication, consolidating hand-rolled helpers, fixing abstractions, or an architecture or tech-debt cleanup. Not for routine coding, single bug fixes, or reviewing a small diff.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Refine Structure
 
 This is a campaign you run once, deliberately. It is not a style to apply while coding.
 
-Most structural rot comes from decisions made with local information. Whoever wrote the third date formatter did not know the other two existed. Whoever added the fifth null check could not see that the value had been parsed and validated two layers up. Rules like "reuse existing code" or "avoid defensive checks" cannot fix this, because what was missing was knowledge, not intent. Your advantage in this campaign is that you can afford to build the global view those authors lacked, and restructure from it.
+What follows describes what matters and why. It is guidance for your judgment, not a procedure: order the work the way this codebase demands, go back when you learn something, and skip what does not apply. The few things that are firm are marked as such and explain themselves.
+
+## The idea
+
+Most structural rot comes from decisions made with local information. Whoever wrote the third date formatter did not know the other two existed. Whoever added the fifth null check could not see that the value had been parsed and validated two layers up. Rules like "reuse existing code" cannot fix this, because what was missing was knowledge, not intent. Your advantage is that you can afford to build the global view those authors lacked, and restructure from it.
 
 Think in terms of **knowledge and ownership**, not lines or files:
 
-- Duplication: one piece of knowledge with several owners.
-- Redundant defense: one fact with no clear establisher, so every layer re-checks it.
-- Wrong abstraction: one owner forced to hold several pieces of knowledge that change for different reasons.
-- Misplaced logic: a decision made far from the concept it is about.
+- Duplication is one piece of knowledge with several owners.
+- Redundant defense is a fact with no clear establisher, so every layer re-checks it.
+- A wrong abstraction is one owner holding several pieces of knowledge that change for different reasons.
+- Misplaced logic is a decision made far from the concept it is about.
 
-## What a finished campaign looks like
+## What done and deep mean
 
-- Each piece of business knowledge or capability in scope has one authoritative implementation, where its consumers would look for it. Callers use it. Superseded paths are deleted, not left beside it.
+When the campaign is done:
+
+- Each piece of business knowledge or capability in scope has one authoritative implementation, where its consumers would look for it. Callers use it, and the superseded paths are gone rather than left beside it.
 - Hand-rolled code that duplicates an installed dependency, the framework, or the standard library has been replaced wherever the contracts actually match.
 - Every remaining abstraction earns its place: it captures shared knowledge, a real boundary, or a variation point that is actually used.
-- Each important fact (validated input, invariant, permission) is established once, where it enters, and carried forward by type or contract instead of being re-checked.
-- Behavior is preserved. Every intentional behavior change is listed and was approved by the user.
-- Decisions that are cheap to enforce are locked in by types, lint rules, or architecture tests.
-- A ledger records what was found, what was decided and why, what changed, how it was verified, and what was deliberately left alone.
+- Important facts (validated input, invariants, permissions) are established once, where they enter, and carried forward by type or contract instead of being re-checked.
+- Behavior is preserved, and every intentional change in behavior was approved by the user.
+- Decisions that are cheap to enforce are enforced by tooling.
+- There is a record of what you found, what you concluded and why, what changed, and what you deliberately left alone.
 
-"No change needed" is a legitimate result for any finding, and for the whole campaign.
+Depth is what separates a campaign from a cleanup:
+
+- You can explain, for each area in scope, why the code has the shape it has and what shape it should have.
+- Findings are traced to causes. Ten duplicated helpers often mean one missing concept; naming that concept is the finding.
+- You looked past what tools report: duplicates that look different, decisions scattered across handlers, library features rebuilt by hand, copies that quietly diverged.
+- Each conclusion survived the strongest counterexample you could find.
+- What you did not examine is stated, not hidden.
+
+A pass that only harvested what a clone detector reported, or stopped at the easy duplicates, is not finished. "No change needed" is still a legitimate conclusion, for a finding or the whole campaign, when it is earned by looking.
 
 ## Scope
 
-Take scope and goal from the user's request: a path, module, feature, or the whole repository. If it is ambiguous, infer it from context and ask only about decisions that would change the outcome. Map the full scope before executing anything. Record findings outside the scope; do not silently expand it.
+Take scope and goal from the user's request: a path, a module, a feature, or the whole repository. If it is ambiguous, infer it from context and ask only about decisions that would change the outcome. Understand the whole scope before changing anything in it. Note findings outside the scope instead of quietly pursuing them.
 
-## Campaign rhythm
+## How the work tends to go
 
-The phases describe the shape of the work, not a script. Spend effort where the evidence leads.
+A campaign moves through understanding, deciding, changing, and making the change stick. In practice these overlap: deciding sends you back to look again, and one change reveals the next. Treat the sections below as concerns to keep in view, not steps to complete.
 
-### 1. Map: build the global view
+### Understand before changing
 
-Coverage means understanding the entry points, the main data flows, which module owns which concept, and what shared code and dependencies exist. It does not mean reading every file. Use cheap, broad means first (search, clone detection, dependency manifests, version history) and read deeply only where candidates appear.
+The goal is the global view the original authors lacked. That means knowing what capabilities already exist (in the repository, and in the dependencies, framework, and standard library at the versions actually in use), where the same knowledge lives in more than one place, who decides each important rule today, where outside data enters and where it is checked again, which abstractions look strained or missing, and how changes can be verified: the fastest relevant tests, and where coverage is weak.
 
-Build these in the ledger:
+Breadth here means entry points, data flows, and ownership, not reading every file. Cheap, broad means come first (search, clone detection, dependency manifests, version history), and depth goes where candidates appear. [Finding duplication](references/finding-duplication.md) has techniques for both.
 
-- **Capability inventory**: in-repo helpers, utilities, and services, plus the relevant capabilities of installed dependencies, the framework, and the standard library at the versions actually in use. This is the knowledge the original authors were missing, and most other findings are checked against it.
-- **Duplication clusters**: places that encode the same knowledge, including copies that look different. See [finding duplication](references/finding-duplication.md).
-- **Ownership map**: for key concepts and decisions (a pricing rule, a permission check, a retry policy, an ID format), every place that currently decides it.
-- **Fact map**: where external data enters, where it is validated, and where it is checked again. See [fact ownership](references/fact-ownership.md).
-- **Abstraction suspects**: abstractions that look wrong, and places where one is missing. See [abstraction judgment](references/abstraction-judgment.md).
-- **Verification baseline**: how to build and run the fastest relevant tests, the current pass/fail state, and which areas are weakly covered.
+The usual ways this goes wrong: stopping at what tools report, treating similar names as the same knowledge, and missing the history that explains why two copies differ. Copies that have already drifted apart deserve the closest look, because each difference is either intentional and must survive, or accidental and often a latent bug.
 
-If your environment supports subagents or parallel workers, delegate mapping by area. Ask each worker to return findings with file:line evidence in the ledger's finding format, not file contents, so the main context holds conclusions. Size the fan-out to the repository; there is no fixed number.
+If your environment supports subagents or parallel workers, delegate by area, and ask each for conclusions with file:line evidence rather than file contents, so your own context holds the picture instead of the raw material.
 
-Copies that have already drifted apart deserve the closest look. Each difference is either intentional and must survive consolidation, or accidental, which often means a latent bug.
+### Decide what each finding really is
 
-### 2. Decide: one verdict per finding
+Deciding is where the real work is. For each finding, the question is: if someone who understood all of this code designed it today, would these pieces be one thing or several? The most useful test is whether they would change together, for the same reason. Similar shape is a lead, not an answer.
 
-Give each finding exactly one verdict:
+Conclusions usually take one of a few shapes: reuse what already exists, extract one small capability, split a wrong abstraction back apart, move a decision to its rightful owner, or leave things as they are. Name the conclusion that actually fits rather than forcing a label. [Abstraction judgment](references/abstraction-judgment.md) covers the signals and trade-offs, and [fact ownership](references/fact-ownership.md) covers validation, guards, and error handling.
 
-| Verdict | Meaning |
-|---|---|
-| reuse | Migrate callers to an existing implementation, dependency, or standard feature. |
-| extract | Create one small capability with a named contract, in the module that owns the knowledge. |
-| split | Dismantle a wrong abstraction back into its callers, then look again for the real shared concept. |
-| relocate | Move a decision or check to its rightful owner. |
-| keep | The duplication or abstraction is justified. Say why. |
-| defer | Out of scope, or blocked on information. Say what is missing. |
+Before settling, look for what would prove you wrong: the one caller with a different contract, the history that explains the split, the copy that diverged on purpose. Then write down enough for someone else to judge: the evidence, the differences that matter and how each will be handled, and what the change would cost and risk. Value rises with how often the knowledge changes, how far copies have already drifted, and how many callers benefit. Risk rises with public contracts, weak tests, and dynamic usage.
 
-The central test: **would these change together, for the same reason?** If yes, they are one piece of knowledge and should have one owner. If they only look alike, leave them apart. Similar shape is a lead, never a verdict.
+Before large edits, show the user what you found and what you propose, and let them choose, unless they asked you to proceed on your own. They often know which differences are intentional and which areas are about to change; their input is cheap, and the mistakes it prevents are not. Any change in behavior, including fixing a bug you found in a drifted copy, needs their explicit approval.
 
-For each verdict, record the evidence (callers, file:line), every behavioral difference between the copies and how it will be handled, the migration cost including tests, the blast radius if the shared code is wrong, and the expected payoff. Rank by payoff against risk. Knowledge that changes often, copies that have drifted, and many callers raise the payoff. Public contracts, weak test coverage, and dynamic usage raise the risk.
+### Change in units someone can review
 
-**Checkpoint.** Before large edits, present the verdict table and let the user choose and adjust, unless they told you to proceed on your own. Always surface behavior changes for explicit approval, including bugs you find in drifted copies; do not silently pick a winner.
+Make each change about one concept: establish the authoritative implementation, migrate the callers in scope, and delete the superseded code in the same unit. A half-migrated state is worse than either end, and a focused unit is easy to review and to revert. Leave a compatibility shim only when an external consumer needs one, and note when it can go.
 
-### 3. Execute: reviewable units
+Where coverage is weak, pin the current behavior before moving it: outputs, the errors callers depend on, side effects, ordering, edge inputs. Passing tests prove nothing about behavior they never exercised. When many call sites need the same edit, a mechanical transformation (an IDE refactoring, a codemod, a structural rewrite with a tool such as ast-grep or comby) is more consistent and easier to review than a hundred hand edits.
 
-- **One concept per change unit.** Establish the authoritative implementation, migrate every in-scope caller, and delete the superseded code in the same unit. Leave no compatibility shims unless an external consumer needs them, and then mark each with its removal condition.
-- **Pin behavior first where coverage is weak.** Before migrating, write characterization tests for the observable contract: outputs, error types and messages that callers depend on, side effects, ordering, edge inputs. Tests that mirror implementation details do not count.
-- **Prefer mechanical transformation for many call sites**: IDE refactorings, codemods, or structural rewrite tools such as ast-grep, comby, or OpenRewrite. Try the rule on a sample first. A rule-driven change is more consistent and easier to review than hand edits.
-- **Verify in proportion.** Build or type-check plus targeted tests after each unit; the full suite at milestones and at the end. Keep builds incremental; do not clean and rebuild everything to check one change.
-- **When a test fails**, judge it against the contract, not the new code. Change an expectation only when the old one is shown to be wrong, and log that as a behavior change.
-- Update the ledger after each unit.
+Verify in proportion: a build or type check and the targeted tests for each unit, the full suite at milestones. When a test fails, judge it against the contract, not against your new code.
 
-### 4. Lock in
+### Make it stick
 
-Prevent regrowth with mechanisms that cost nothing at agent runtime and fail loudly:
+Prose instructions decay; tooling does not. Where it is cheap, lock decisions in with types that carry established facts (parsed values, value objects, branded or newtype wrappers), lint rules that ban the superseded path or import, dependency rules for the boundaries you drew, and names and locations that make the authoritative implementation the first thing a search finds. Add rules only for decisions made in this campaign, and prefer tooling the repository already has.
 
-- Types that carry established facts (parsed values, value objects, branded or newtype wrappers), so re-checks become unnecessary by construction.
-- Lint or analyzer rules that ban the superseded path or import, such as `no-restricted-imports`, ruff `banned-api`, forbiddenapis, depguard, or .NET banned-API analyzers.
-- Dependency or architecture rules for the boundaries you established, such as dependency-cruiser, import-linter, or ArchUnit.
-- Obvious names and locations, so the authoritative implementation is what a search finds first.
+### Close
 
-Add rules only for decisions made in this campaign, and prefer tooling the repository already has. Locking in belongs in code and tooling, not in new prose instructions for agents.
+The campaign is over when every finding in scope has a considered conclusion and the approved work is done or deliberately deferred, when the remaining value no longer justifies the risk, or when the user's goal is met. Report what changed in the shape of the codebase, each change and how it was verified, behavior changes and their approval, what you locked in, what you kept or deferred and why, the net size change (implementation and tests separately), and the limits of what you could see.
 
-### 5. Close
+## Thinking deeper
 
-Stop when every in-scope finding has a verdict and each approved verdict is done or explicitly deferred, when the remaining payoff no longer justifies the risk, or when the user's goal is met. Then report:
+These are the questions that turn a cleanup into a refinement. Return to them whenever the work starts to feel mechanical.
 
-- What changed in the shape of the codebase: the authoritative implementations and owners now in place.
-- Each change unit: the problem, the new home, what was removed, the behavior preserved, and how it was verified.
-- Behavior changes, with their approval.
-- Lock-ins added.
-- Findings kept, deferred, or out of scope, with reasons.
-- Net size change, implementation and tests reported separately.
-- Remaining risks and the limits of the evidence, such as unsearchable dynamic usage or weakly tested areas.
+- Why does the code look like this? A past requirement, a deadline, a constraint that no longer holds? The reason a duplication exists often tells you whether it should.
+- If this area were designed today by someone who understood all of it, what would it look like, and which differences from the current code actually matter?
+- Do several findings share one cause? Scattered validations may be one missing type; five similar handlers may be one missing concept.
+- What would prove this conclusion wrong, and have you looked for it?
+- Is the problem the user named the real one, or a symptom of something nearby?
+- When the evidence changes your mind, change the plan and say so.
 
-## Hard boundaries
+## Where to be careful
 
-- Do not change public APIs, wire or file formats, persisted schemas, or configuration contracts without explicit approval.
-- Do not delete a check unless you can name where its fact is established and why nothing between there and here breaks it.
-- An empty search is not proof that exported, reflective, dynamically dispatched, configuration-driven, or externally consumed code is unused. Record the limits of each search.
-- Do not weaken or delete tests to get a pass.
-- Do not create catch-all modules (`utils`, `common`, `helpers`) as a home for extractions. Code lives with the knowledge it encodes.
-- Preserve unrelated work in the tree. No destructive version-control operations.
+Most of this campaign is judgment. A few moves fail silently or are hard to undo, so treat these as firm:
 
-## Ledger
+- **Deleting a check** is the one move here that fails silently: the code compiles, tests pass, and the missing protection surfaces months later as corruption or a security hole. Before deleting one, be able to say where its fact is established and why nothing on the way breaks it. If you can't, hoisting it to the boundary or encoding it in a type gets most of the benefit without the risk.
+- **Public contracts** (APIs, wire and file formats, persisted schemas, configuration) are depended on in ways the repository cannot show you. Change them only with explicit approval.
+- **"Unused" is a claim about every consumer.** An empty search proves little for exported, reflective, dynamically dispatched, configuration-driven, or externally consumed code. Say what your search could not see.
+- **Tests are the evidence** that behavior survived. Weakening one to get a pass destroys that evidence. Change an expectation only when the old one is shown to be wrong, and report it as a behavior change.
+- **Other people's work**: leave unrelated changes in the tree alone, and use no destructive version-control operations.
 
-Keep the campaign state in `.refinery/<campaign>/ledger.md`, or wherever the user prefers. It outlives context limits and sessions: on resume, read it first, check it against the current code, and continue from the open items. Ask whether the user wants it committed or ignored.
+## Keeping a record
+
+A campaign usually outlives one context window. Keep a record in `.refinery/<campaign>/ledger.md`, or wherever the user prefers, with two jobs: letting you or a later session resume without redoing work, and letting the user review your reasoning. On resume, read it first and check it against the current code. [Ledger format](references/ledger-format.md) shows one shape that works; keep what serves this campaign. Ask whether the user wants it committed.
 
 ## References
 
 Read these when the work calls for them, not up front:
 
-- [references/finding-duplication.md](references/finding-duplication.md): while mapping duplication and reinvented wheels.
-- [references/abstraction-judgment.md](references/abstraction-judgment.md): while deciding verdicts on abstractions.
-- [references/fact-ownership.md](references/fact-ownership.md): whenever a finding involves validation, guards, error handling, fallbacks, or defensive copies.
-- [references/ledger-format.md](references/ledger-format.md): when creating or resuming the ledger.
+- [references/finding-duplication.md](references/finding-duplication.md): techniques for finding duplicated knowledge and reinvented wheels.
+- [references/abstraction-judgment.md](references/abstraction-judgment.md): when sharing helps, when it hurts, and how to tell wrong and missing abstractions.
+- [references/fact-ownership.md](references/fact-ownership.md): validation, guards, error handling, fallbacks, and defensive copies.
+- [references/ledger-format.md](references/ledger-format.md): one shape for the campaign record.

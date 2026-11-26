@@ -8,8 +8,8 @@ CodeRefinery skills are **campaigns you start on purpose**, not rules that ride 
 
 | Skill | Version | What it does |
 |---|---|---|
-| [`refine-structure`](skills/refine-structure/SKILL.md) | 0.1.0 | Maps capabilities, duplication, ownership, and validated facts across a repository or module; consolidates duplicated knowledge and reinvented wheels; repairs missing or wrong abstractions; removes superseded paths; locks decisions in with types, lint, or architecture rules. |
-| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.1.0 | Sets up representative workloads and a baseline; explains where the cost goes with profiles and a per-operation work ledger; removes redundant work such as repeated validation, defensive copies, representation churn, chatty I/O, and invariant work redone per call; keeps only changes that measure better. |
+| [`refine-structure`](skills/refine-structure/SKILL.md) | 0.2.0 | Maps capabilities, duplication, ownership, and validated facts across a repository or module; consolidates duplicated knowledge and reinvented wheels; repairs missing or wrong abstractions; removes superseded paths; locks decisions in with types, lint, or architecture rules. |
+| [`refine-performance`](skills/refine-performance/SKILL.md) | 0.2.0 | Sets up representative workloads and a baseline; explains where the cost goes with profiles and a per-operation work ledger; removes redundant work such as repeated validation, defensive copies, representation churn, chatty I/O, and invariant work redone per call; keeps only changes that measure better. |
 
 Each skill's description is deliberately narrow: an agent loads it when you ask for a deliberate refinement pass, in a slash command or in plain words, and not during ordinary coding.
 
@@ -56,7 +56,9 @@ Run a campaign in its own session. Once a skill is loaded, most agents keep its 
 
 ## Design
 
-- **Guidance, not procedure.** Each skill states what a good result looks like, how to judge, what counts as evidence, and when to stop. There are no quotas, scores, fixed agent counts, or line-count thresholds; those tend to replace the goal with a proxy.
+- **Guidance, not procedure.** Each skill states what a good result looks like, what depth means, how to judge, what counts as evidence, and when to stop, then leaves the method to the agent. There are no quotas, scores, fixed agent counts, or line-count thresholds; those tend to replace the goal with a proxy.
+- **A high bar, a free hand.** The bar is set on the outcome (findings traced to causes, costs accounted for, conclusions tested against counterexamples), not on following steps. Each skill includes open questions meant to push the thinking further, such as "what is the least work this operation could possibly do?"
+- **Few firm rules, each with its reason.** Freedom is matched to fragility. Only moves that fail silently or are hard to undo are firm: deleting checks, changing contracts, weakening tests, compromising benchmark integrity, removing protection. Each says why, so it is applied with understanding rather than literally.
 - **Knowledge and ownership as the unit.** Duplication is one piece of knowledge with several owners; redundant defense is a fact nobody clearly establishes; a wrong abstraction is one owner holding knowledge that changes for different reasons.
 - **Global view first.** A structure campaign starts with a map of existing capabilities (including dependencies and the standard library), duplication, decision owners, and where facts are established. A performance campaign starts with workloads, a baseline, and an explanation of where the cost goes.
 - **Diffuse cost is counted, not guessed.** Overhead spread thin across layers leaves a flat profile. A work ledger counts the work per operation (validations, copies, conversions, queries), and counts are exact evidence that a change removed what it targeted.

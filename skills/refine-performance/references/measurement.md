@@ -1,6 +1,6 @@
 # Measurement
 
-Measurements decide what stays, and they are only as good as their conditions.
+Measurements decide what stays, and they are only as good as their conditions. How much rigor a comparison needs depends on how close the effect is to the noise: a query count dropping from 200 to 3 speaks for itself, while a 3% latency change needs careful paired runs before anyone should believe it.
 
 ## Choose the harness for the question
 
@@ -43,8 +43,8 @@ A difference inside the noise band is no difference. Do not keep adding iteratio
 - Alternate short adjacent runs: baseline, candidate, baseline, candidate. If all baseline samples run first and all candidate samples later, drift in machine state can masquerade as a result.
 - Keep everything identical except the code: command, inputs, warmup, iteration count.
 - Use the statistical comparison your tool provides where it exists (benchstat, BenchmarkDotNet, pyperf `compare_to`, hyperfine's summary).
-- Record every pair. Exclude one only with objective evidence of contamination (a competing process, a load spike, an interruption), and record the exclusion. Never exclude by the direction of the result.
-- If results conflict or drift, stop changing code and fix the measurement first.
+- Record every pair. Exclude one only with objective evidence of contamination (a competing process, a load spike, an interruption), and record the exclusion. Excluding runs because of which way they point is how noise turns into a fake win.
+- If results conflict or drift, fix the measurement before changing more code; otherwise every later decision rests on noise.
 
 ## Counters
 

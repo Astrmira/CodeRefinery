@@ -1,6 +1,6 @@
 # Finding duplication and reinvented wheels
 
-Duplication is repeated knowledge, not repeated text. Tools find text; you decide whether the knowledge is the same. Everything below produces leads, not verdicts.
+Duplication is repeated knowledge, not repeated text. Tools find text; you decide whether the knowledge is the same. Everything below produces leads, not verdicts, and none of it is a required pass: use what fits this codebase.
 
 ## Where to look first
 
@@ -54,12 +54,12 @@ Before recommending reuse, confirm the installed version supports the feature, a
 
 ### 4. Divergent copies
 
-When you find a cluster, compare the members side by side and list every difference. Classify each one:
+When you find a cluster, compare the members side by side. Every difference has a reason, and the reason decides what happens to it:
 
 - **Intentional**: a caller depends on it. It must survive consolidation, as an argument that caller passes, a composition at the call site, or a separate function.
-- **Accidental**: one copy was fixed or extended and the others were not. Usually a latent bug. Consolidating changes behavior for some callers, so surface it for approval.
-- **Unknown**: check the history (`git log -L`, blame) for why the difference was introduced before deciding.
+- **Accidental**: one copy was fixed or extended and the others were not. Usually a latent bug. Consolidating changes behavior for some callers, so it needs the user's approval.
+- **Unknown**: the history (`git log -L`, blame, the linked issue) usually explains it. Find out before deciding.
 
-## Recording a finding
+## What makes a finding useful
 
-For each cluster, note the knowledge it encodes in one sentence, every member with file:line, the differences and their classification, the candidate home or existing implementation, and the callers that would migrate. That is what the decide phase needs.
+A finding is useful when someone can decide on it: what knowledge it encodes, in one sentence; where each copy lives; how the copies differ and why; and where the knowledge could live instead. Often the most valuable finding is not one cluster but the missing concept behind several of them.

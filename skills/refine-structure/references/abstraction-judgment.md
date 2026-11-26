@@ -2,6 +2,8 @@
 
 The aim is to remove repeated knowledge and unnecessary coupling, not to maximize sharing. Both directions are legitimate: extract a missing abstraction, or dismantle a wrong one.
 
+The signals below are reasons to look closer, not verdicts. One signal rarely settles anything; several pointing the same way, together with the history of the code, usually do.
+
 ## The test for sharing
 
 Two pieces of code should share one implementation when they encode the same knowledge:

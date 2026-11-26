@@ -1,6 +1,6 @@
 # Cost taxonomy
 
-Classify each cost before choosing a fix. Each category lists how it shows up, the fixes that usually work, and what to watch out for. Fixes that remove work beat fixes that make the same work faster.
+This is a field guide, not a checklist: use it to recognize what you are looking at and to recall what usually works, not to walk through every category. Each entry lists how the cost shows up, the fixes that usually work, and what to watch out for. Across all of them, fixes that remove work beat fixes that make the same work faster.
 
 ## Algorithmic
 
